@@ -100,9 +100,19 @@ function sheet_(ss, name, cols) {
   return s;
 }
 function sh_(name) {
-  const s = ss_().getSheetByName(name);
-  if (!s) throw new Error('後台尚未初始化，請管理員在試算表執行「稽核系統 → 初始化」');
+  let s = ss_().getSheetByName(name);
+  if (!s) {
+    // 還沒初始化：第一次有人使用時自動建立所有工作表與第一個管理員
+    setupSilently_();
+    s = ss_().getSheetByName(name);
+  }
+  if (!s) throw new Error('後台初始化失敗，請管理員在試算表執行「稽核系統 → 初始化」');
   return s;
+}
+function setupSilently_() {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(20000);
+  try { setup(); } finally { lock.releaseLock(); }
 }
 
 /* ================= API 入口 ================= */
@@ -384,7 +394,12 @@ function withLock_(fn) {
 
 /* ================= 登入憑證 ================= */
 // 名字有改、帳號停用或被刪除時，舊的登入憑證會自動失效
-function secret_() { return PropertiesService.getScriptProperties().getProperty('SECRET'); }
+function secret_() {
+  const props = PropertiesService.getScriptProperties();
+  let k = props.getProperty('SECRET');
+  if (!k) { k = Utilities.getUuid() + Utilities.getUuid(); props.setProperty('SECRET', k); }
+  return k;
+}
 function sign_(s) { return Utilities.base64EncodeWebSafe(Utilities.computeHmacSha256Signature(s, secret_())); }
 function nameKey_(u) {
   return Utilities.base64EncodeWebSafe(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, u.name, Utilities.Charset.UTF_8)).slice(0, 8);

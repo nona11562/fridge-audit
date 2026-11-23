@@ -8,7 +8,7 @@
  * 4. 部署 → 新增部署作業 → 類型選「網頁應用程式」
  *    執行身分：我；誰可以存取：所有人 → 部署。產生的網址就是 app 的網址。
  *
- * 登入方式：員工編號＋姓名（必須和「員工」工作表裡的資料一致，且狀態為「啟用」）。
+ * 登入方式：員工編號（必須在「員工」工作表中，且狀態為「啟用」）。
  */
 const FIRST_ADMIN_ID = '00000';        // ← 改成你的員工編號
 const FIRST_ADMIN_NAME = '系統管理員';  // ← 改成你的姓名
@@ -85,7 +85,7 @@ function setup() {
     if (s && ss.getSheets().length > 1 && s.getLastRow() === 0) ss.deleteSheet(s);
   });
 
-  const msg = '初始化完成！\n\n資料試算表：' + ss.getUrl() + '\n第一個管理員：' + FIRST_ADMIN_ID + '（' + FIRST_ADMIN_NAME + '）\n請用「員工編號＋姓名」登入。\n\n下一步：部署 → 新增部署作業 → 網頁應用程式。';
+  const msg = '初始化完成！\n\n資料試算表：' + ss.getUrl() + '\n第一個管理員：' + FIRST_ADMIN_ID + '（' + FIRST_ADMIN_NAME + '）\n請用員工編號登入。\n\n下一步：部署 → 新增部署作業 → 網頁應用程式。';
   try { SpreadsheetApp.getUi().alert(msg); } catch (e) { Logger.log(msg); }
 }
 
@@ -148,11 +148,11 @@ function handle_(req) {
 
 const ACTIONS = {
   login(r) {
-    const id = String(r.id || '').trim(), name = String(r.name || '').trim();
-    if (!id || !name) throw new Error('請輸入員工編號和姓名');
+    const id = String(r.id || '').trim();
+    if (!id) throw new Error('請輸入員工編號');
     if (tooMany_(id)) throw new Error('錯誤次數過多，請 10 分鐘後再試');
     const u = users_().find(x => x.id === id);
-    if (!u || u.name.replace(/\s/g, '') !== name.replace(/\s/g, '')) { fail_(id); throw new Error('員工編號或姓名不正確，或尚未加入員工名單'); }
+    if (!u) { fail_(id); throw new Error('查無此員工編號，或尚未加入員工名單'); }
     if (u.status !== '啟用') throw new Error('此帳號已停用，請洽管理員');
     CacheService.getScriptCache().remove('f_' + id);
     sh_(SHEETS.users).getRange(u.row, 7).setValue(new Date());

@@ -6,4 +6,4 @@
 - 後端：`apps-script-Code.gs`（Google Apps Script，資料存在 Google 試算表）
 - 只用 Apps Script 時：`apps-script-Code.gs` ＋ `apps-script-Index.html`
 
-`index.html` 最前面的 `API_URL` 是 Apps Script 部署網址（結尾 `/exec`）。留空則為示範模式。
+`index.html` 最前面的 `API_URL` 是 Apps Script 部署網址（結尾 `/exec`）。留空則為示範模式。登入方式：員工編號（需在「員工」工作表且狀態為啟用）。
